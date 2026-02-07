@@ -107,3 +107,36 @@ def fit_race_pace_model(laps, degree=3):
         "r2": model.score(X, y),
         "coefficients": model.named_steps["linearregression"].coef_,
     }
+
+
+def estimate_optimal_stint_length(laps, compound, threshold=1.0):
+    """Estimate how many laps a compound can run before deg gets too high.
+
+    Fits the tyre deg model, then walks forward from tyre life 1 (fresh
+    tyres) until the predicted lap time exceeds the fresh-tyre prediction
+    by more than the threshold. That's the point where you're losing
+    too much time and should pit.
+
+    Args:
+        laps: Laps object for a single driver.
+        compound: Compound to evaluate (e.g. "SOFT").
+        threshold: Max acceptable degradation in seconds (default 1.0).
+
+    Returns:
+        Estimated optimal stint length in laps, or None if there isn't
+        enough data for that compound.
+    """
+    models = fit_tyre_deg_model(laps)
+    if compound not in models:
+        return None
+
+    pipe = models[compound]["model"]
+    baseline = float(pipe.predict([[1]])[0])
+
+    for tyre_life in range(2, 60):
+        predicted = float(pipe.predict([[tyre_life]])[0])
+        if predicted - baseline > threshold:
+            return tyre_life - 1
+
+    # compound didn't degrade past threshold within 59 laps
+    return 59
