@@ -72,3 +72,38 @@ def predict_lap_time(model, tyre_life, compound):
     if compound not in model:
         return None
     return float(model[compound]["model"].predict([[tyre_life]])[0])
+
+
+def fit_race_pace_model(laps, degree=3):
+    """Fit a polynomial model to overall race pace.
+
+    Models lap time as a function of lap number across the full race.
+    Default degree 3 captures the combined shape of fuel burn (car gets
+    lighter and faster) and tyre degradation (car gets slower) plus
+    the reset effect of pit stops.
+
+    The R-squared value tells you how predictable the driver's pace was.
+    A high R2 means consistent, clean race. Low R2 usually means
+    incidents, safety cars, or weather changes.
+
+    Args:
+        laps: A Laps object for a single driver.
+        degree: Polynomial degree (default 3).
+
+    Returns:
+        Dict with "model", "r2", and "coefficients".
+    """
+    summary = summarise_laps(laps)
+    summary = summary.dropna(subset=["LapTime"])
+
+    X = summary[["LapNumber"]].values
+    y = summary["LapTime"].values
+
+    model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+    model.fit(X, y)
+
+    return {
+        "model": model,
+        "r2": model.score(X, y),
+        "coefficients": model.named_steps["linearregression"].coef_,
+    }
