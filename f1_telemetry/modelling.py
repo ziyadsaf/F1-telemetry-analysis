@@ -140,3 +140,32 @@ def estimate_optimal_stint_length(laps, compound, threshold=1.0):
 
     # compound didn't degrade past threshold within 59 laps
     return 59
+
+
+def fuel_corrected_pace(laps, fuel_effect_per_lap=0.055):
+    """Apply a linear fuel correction to lap times.
+
+    F1 cars lose roughly 0.055s per lap as fuel burns off. Raw lap times
+    mix this fuel improvement with tyre degradation, making it hard to
+    isolate tyre effects. This function adds the fuel time back in so
+    all laps are normalised to equal-fuel conditions.
+
+    Example: on lap 40 of 57, there are 17 laps of fuel left.
+    Correction = 17 * 0.055 = 0.935s added to that lap time.
+
+    Args:
+        laps: Laps object for a single driver.
+        fuel_effect_per_lap: Seconds gained per lap from fuel burn.
+
+    Returns:
+        DataFrame with LapNumber, LapTime, FuelCorrectedTime, and Compound.
+    """
+    summary = summarise_laps(laps)
+    summary = summary.dropna(subset=["LapTime"])
+    total_laps = summary["LapNumber"].max()
+
+    summary["FuelCorrectedTime"] = (
+        summary["LapTime"]
+        + (total_laps - summary["LapNumber"]) * fuel_effect_per_lap
+    )
+    return summary[["LapNumber", "LapTime", "FuelCorrectedTime", "Compound"]]
