@@ -185,3 +185,53 @@ def plot_driver_comparison(telemetry_1, telemetry_2, driver_1, driver_2,
 
     fig.tight_layout()
     plt.show()
+
+
+def plot_stint_pace(laps_summary, model_predictions=None, title="Race Pace"):
+    """Scatter plot of race pace with optional model fit overlay.
+
+    Same compound-coloured scatter as plot_lap_times, but designed
+    to be used with the race pace model. Pass in model predictions
+    to see the fitted curve as a dashed black line on top of the
+    actual lap times.
+
+    Args:
+        laps_summary: DataFrame from analysis.summarise_laps().
+        model_predictions: Optional DataFrame with LapNumber and
+            PredictedTime columns from the race pace model.
+        title: Plot title.
+    """
+    fig, ax = plt.subplots(figsize=(14, 6))
+
+    for compound in laps_summary["Compound"].unique():
+        mask = laps_summary["Compound"] == compound
+        colour = COMPOUND_COLOURS.get(compound, "#888888")
+        ax.scatter(
+            laps_summary.loc[mask, "LapNumber"],
+            laps_summary.loc[mask, "LapTime"],
+            c=colour,
+            edgecolors="black",
+            linewidths=0.5,
+            s=40,
+            label=compound,
+            zorder=3,
+        )
+
+    if model_predictions is not None:
+        ax.plot(
+            model_predictions["LapNumber"],
+            model_predictions["PredictedTime"],
+            color="black",
+            linestyle="--",
+            linewidth=1.5,
+            label="Model fit",
+            zorder=4,
+        )
+
+    ax.set_xlabel("Lap Number")
+    ax.set_ylabel("Lap Time (s)")
+    ax.set_title(title, fontsize=14, fontweight="bold")
+    ax.legend(title="Compound")
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    plt.show()
