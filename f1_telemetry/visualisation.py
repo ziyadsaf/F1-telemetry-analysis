@@ -89,3 +89,37 @@ def plot_lap_times(laps_summary, title="Lap Times"):
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
     plt.show()
+
+
+def plot_tyre_degradation(deg_data, title="Tyre Degradation"):
+    """Plot lap time vs tyre life, one line per stint.
+
+    Each stint gets its own line coloured by compound. Steeper upward
+    slope means the compound is falling off faster. Useful for comparing
+    degradation rates between soft, medium and hard.
+
+    Args:
+        deg_data: DataFrame from analysis.tyre_degradation().
+        title: Plot title.
+    """
+    fig, ax = plt.subplots(figsize=(14, 6))
+
+    for (stint, compound), group in deg_data.groupby(["Stint", "Compound"]):
+        colour = COMPOUND_COLOURS.get(compound, "#888888")
+        ax.plot(
+            group["TyreLife"],
+            group["LapTime"],
+            marker="o",
+            markersize=4,
+            color=colour,
+            label=f"Stint {stint} ({compound})",
+            linewidth=1.5,
+        )
+
+    ax.set_xlabel("Tyre Life (laps)")
+    ax.set_ylabel("Lap Time (s)")
+    ax.set_title(title, fontsize=14, fontweight="bold")
+    ax.legend(fontsize=9)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    plt.show()
