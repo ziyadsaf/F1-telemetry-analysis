@@ -53,3 +53,22 @@ def fit_tyre_deg_model(laps, degree=2):
         }
 
     return models
+
+
+def predict_lap_time(model, tyre_life, compound):
+    """Predict lap time for a given tyre age and compound.
+
+    Uses the output of fit_tyre_deg_model() to predict what a driver's
+    lap time would be at a specific point in a stint.
+
+    Args:
+        model: Output of fit_tyre_deg_model().
+        tyre_life: Number of laps on the current set of tyres.
+        compound: Tyre compound name (e.g. "SOFT", "MEDIUM").
+
+    Returns:
+        Predicted lap time in seconds, or None if compound not in model.
+    """
+    if compound not in model:
+        return None
+    return float(model[compound]["model"].predict([[tyre_life]])[0])
