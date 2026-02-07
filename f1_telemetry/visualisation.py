@@ -123,3 +123,65 @@ def plot_tyre_degradation(deg_data, title="Tyre Degradation"):
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
     plt.show()
+
+
+def plot_driver_comparison(telemetry_1, telemetry_2, driver_1, driver_2,
+                           title="Driver Comparison"):
+    """Overlay two drivers' telemetry on the same chart.
+
+    Three panels: speed (top), throttle (middle), gear (bottom).
+    Driver 1 in blue, driver 2 in red. Shows where one driver gains
+    or loses time - higher speed through a corner, earlier throttle
+    application, different gear choices.
+
+    Args:
+        telemetry_1: Telemetry DataFrame for driver 1.
+        telemetry_2: Telemetry DataFrame for driver 2.
+        driver_1: Driver 1 abbreviation (e.g. "VER").
+        driver_2: Driver 2 abbreviation (e.g. "HAM").
+        title: Plot title.
+    """
+    fig, axes = plt.subplots(3, 1, figsize=(14, 9), sharex=True)
+    fig.suptitle(title, fontsize=14, fontweight="bold")
+
+    # speed
+    axes[0].plot(
+        telemetry_1["Distance"], telemetry_1["Speed"],
+        label=driver_1, color="#1E88E5", linewidth=1.2,
+    )
+    axes[0].plot(
+        telemetry_2["Distance"], telemetry_2["Speed"],
+        label=driver_2, color="#E53935", linewidth=1.2,
+    )
+    axes[0].set_ylabel("Speed (km/h)")
+    axes[0].legend(loc="lower right")
+    axes[0].grid(True, alpha=0.3)
+
+    # throttle
+    axes[1].plot(
+        telemetry_1["Distance"], telemetry_1["Throttle"],
+        color="#1E88E5", linewidth=1.2,
+    )
+    axes[1].plot(
+        telemetry_2["Distance"], telemetry_2["Throttle"],
+        color="#E53935", linewidth=1.2,
+    )
+    axes[1].set_ylabel("Throttle (%)")
+    axes[1].set_ylim(-5, 105)
+    axes[1].grid(True, alpha=0.3)
+
+    # gear
+    axes[2].plot(
+        telemetry_1["Distance"], telemetry_1["nGear"],
+        color="#1E88E5", linewidth=1.2,
+    )
+    axes[2].plot(
+        telemetry_2["Distance"], telemetry_2["nGear"],
+        color="#E53935", linewidth=1.2,
+    )
+    axes[2].set_ylabel("Gear")
+    axes[2].set_xlabel("Distance (m)")
+    axes[2].grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    plt.show()
