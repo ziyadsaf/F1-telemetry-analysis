@@ -28,7 +28,7 @@ def plot_speed_trace(telemetry, title="Speed Trace"):
     """
     fig, axes = plt.subplots(3, 1, figsize=(14, 8), sharex=True)
     fig.suptitle(title, fontsize=14, fontweight="bold")
-
+ 
     distance = telemetry["Distance"]
 
     # speed
@@ -51,5 +51,41 @@ def plot_speed_trace(telemetry, title="Speed Trace"):
     axes[2].set_ylim(-0.05, 1.1)
     axes[2].grid(True, alpha=0.3)
 
+    fig.tight_layout()
+    plt.show()
+
+
+def plot_lap_times(laps_summary, title="Lap Times"):
+    """Scatter plot of lap times coloured by tyre compound.
+
+    Each dot is one lap. Colour maps to compound using F1 broadcast
+    colours. You can spot stint transitions (colour changes) and tyre
+    drop-off (dots drifting upward within a stint).
+
+    Args:
+        laps_summary: DataFrame from analysis.summarise_laps().
+        title: Plot title.
+    """
+    fig, ax = plt.subplots(figsize=(14, 6))
+
+    for compound in laps_summary["Compound"].unique():
+        mask = laps_summary["Compound"] == compound
+        colour = COMPOUND_COLOURS.get(compound, "#888888")
+        ax.scatter(
+            laps_summary.loc[mask, "LapNumber"],
+            laps_summary.loc[mask, "LapTime"],
+            c=colour,
+            edgecolors="black",
+            linewidths=0.5,
+            s=50,
+            label=compound,
+            zorder=3,
+        )
+
+    ax.set_xlabel("Lap Number")
+    ax.set_ylabel("Lap Time (s)")
+    ax.set_title(title, fontsize=14, fontweight="bold")
+    ax.legend(title="Compound")
+    ax.grid(True, alpha=0.3)
     fig.tight_layout()
     plt.show()
