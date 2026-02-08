@@ -11,7 +11,7 @@ Built with Python 3.9+.
 - Compares driver telemetry (speed, throttle, brake, gear) on a lap-by-lap basis
 - Models tyre degradation curves per compound and stint length
 - Fits lap time models to estimate pace trends across a race
-- Outputs plots: speed traces, lap time distributions, tyre deg curves, track-mapped telemetry
+- Outputs plots: speed traces, lap time scatter plots, tyre deg curves, driver telemetry comparisons
 
 ## Project structure
 
@@ -70,8 +70,8 @@ Or use the modules directly in your own scripts:
 
 ```python
 from f1_telemetry.loader import load_session, get_driver_laps, get_telemetry
-from f1_telemetry.analysis import compare_teammates, analyse_tyre_stints
-from f1_telemetry.visualisation import plot_speed_trace, plot_lap_distribution
+from f1_telemetry.analysis import compare_drivers, analyse_tyre_stints
+from f1_telemetry.visualisation import plot_speed_trace, plot_lap_times
 
 session = load_session(2024, "Bahrain", "R")
 laps = get_driver_laps(session, "VER")
@@ -94,6 +94,7 @@ No API keys required.
 - **matplotlib** — plotting
 - **seaborn** — statistical visualisation
 - **scikit-learn** — lap time modelling and regression
+- **tqdm** — progress bars
 
 Full list in `requirements.txt`.
 
@@ -105,6 +106,7 @@ Running the analysis generates plots in the `output/` directory:
 - `lap_times.png` — lap time scatter plot across a race stint
 - `tyre_deg.png` — degradation curves by compound
 - `driver_comparison.png` — head-to-head telemetry comparison
+- `race_pace.png` — race pace scatter with model fit overlay
 
 ## License
 
