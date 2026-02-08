@@ -24,9 +24,10 @@ def build_parser():
     parser = argparse.ArgumentParser(description="F1 Telemetry Analysis")
     parser.add_argument("--year", type=int, required=True)
     parser.add_argument("--race", type=str, required=True)
+    # Session types: FP1/FP2/FP3 (practice), Q (qualifying), SQ (sprint qualifying), S (sprint), R (race)
     parser.add_argument("--session", type=str, default="R",
                         choices=["FP1", "FP2", "FP3", "Q", "SQ", "S", "R"])
-    parser.add_argument("--drivers", nargs="+", metavar="DRIVER")
+    parser.add_argument("--drivers", nargs="+", metavar="DRIVER")  # One or more driver names
     return parser
 
 
