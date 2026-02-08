@@ -2,10 +2,13 @@
 
 import argparse
 import sys
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+
+OUTPUT_DIR = Path(__file__).resolve().parent / "output"
 
 from f1_telemetry.loader import load_session, get_driver_laps, get_telemetry, list_drivers
 from f1_telemetry.analysis import summarise_laps, stint_summary, tyre_degradation, compare_drivers
@@ -67,17 +70,20 @@ def analyse_single_driver(session, driver):
 
     plt.ion()
     plots = [
-        ("Speed trace", lambda: plot_speed_trace(telemetry, title=f"{driver} Speed Trace - {event_name}")),
-        ("Lap times", lambda: plot_lap_times(summary, title=f"{driver} Lap Times - {event_name}")),
-        ("Tyre degradation", lambda: plot_tyre_degradation(tyre_degradation(laps), title=f"{driver} Tyre Deg - {event_name}")),
-        ("Race pace", lambda: plot_stint_pace(summary, model_predictions=predictions, title=f"{driver} Race Pace - {event_name}")),
+        ("speed_trace", lambda: plot_speed_trace(telemetry, title=f"{driver} Speed Trace - {event_name}")),
+        ("lap_times", lambda: plot_lap_times(summary, title=f"{driver} Lap Times - {event_name}")),
+        ("tyre_deg", lambda: plot_tyre_degradation(tyre_degradation(laps), title=f"{driver} Tyre Deg - {event_name}")),
+        ("race_pace", lambda: plot_stint_pace(summary, model_predictions=predictions, title=f"{driver} Race Pace - {event_name}")),
     ]
 
-    for _, plot_fn in tqdm(plots, desc="Generating plots"):
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    for filename, plot_fn in tqdm(plots, desc="Generating plots"):
         plot_fn()
+        plt.gcf().savefig(OUTPUT_DIR / f"{filename}.png", dpi=150, bbox_inches="tight")
 
     plt.ioff()
     plt.show()
+    print(f"\nPlots saved to {OUTPUT_DIR}/")
 
 
 def analyse_two_drivers(session, driver_1, driver_2):
@@ -109,16 +115,19 @@ def analyse_two_drivers(session, driver_1, driver_2):
 
     plt.ion()
     plots = [
-        ("Driver comparison", lambda: plot_driver_comparison(tel_1, tel_2, driver_1, driver_2, title=f"{driver_1} vs {driver_2} - {event_name}")),
-        (f"{driver_1} lap times", lambda: plot_lap_times(summarise_laps(laps_1), title=f"{driver_1} Lap Times - {event_name}")),
-        (f"{driver_2} lap times", lambda: plot_lap_times(summarise_laps(laps_2), title=f"{driver_2} Lap Times - {event_name}")),
+        ("driver_comparison", lambda: plot_driver_comparison(tel_1, tel_2, driver_1, driver_2, title=f"{driver_1} vs {driver_2} - {event_name}")),
+        (f"{driver_1.lower()}_lap_times", lambda: plot_lap_times(summarise_laps(laps_1), title=f"{driver_1} Lap Times - {event_name}")),
+        (f"{driver_2.lower()}_lap_times", lambda: plot_lap_times(summarise_laps(laps_2), title=f"{driver_2} Lap Times - {event_name}")),
     ]
 
-    for _, plot_fn in tqdm(plots, desc="Generating plots"):
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    for filename, plot_fn in tqdm(plots, desc="Generating plots"):
         plot_fn()
+        plt.gcf().savefig(OUTPUT_DIR / f"{filename}.png", dpi=150, bbox_inches="tight")
 
     plt.ioff()
     plt.show()
+    print(f"\nPlots saved to {OUTPUT_DIR}/")
 
 
 def main():
