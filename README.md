@@ -15,13 +15,10 @@ Tool for analyzing Formula 1 race data. Pulls session data from [FastF1](https:/
 ```
 F1-telemetry-analysis/
 ├── f1_telemetry/
-│   ├── __init__.py
 │   ├── loader.py          # Session & telemetry data loading
 │   ├── analysis.py        # Lap performance & sector analysis
 │   ├── modelling.py       # Lap time prediction & tyre deg models
 │   └── visualisation.py   # Plotting & chart generation
-├── examples/
-│   └── race_analysis.py   # Full pipeline example
 ├── output/                # Generated plots land here
 ├── main.py                # CLI entry point
 ├── requirements.txt
