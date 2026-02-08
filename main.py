@@ -4,6 +4,8 @@ import argparse
 import sys
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from f1_telemetry.loader import load_session, get_driver_laps, get_telemetry, list_drivers
 from f1_telemetry.analysis import summarise_laps, stint_summary, tyre_degradation, compare_drivers
@@ -46,11 +48,11 @@ def analyse_single_driver(session, driver):
     deg_models = fit_tyre_deg_model(laps)
     print(f"\nTyre deg models:")
     for compound, info in deg_models.items():
-        print(f"  {compound}: R² = {info['r2']:.3f}")
+        print(f"  {compound}: R^2 = {info['r2']:.3f}")
 
     # fit race pace model
     pace = fit_race_pace_model(laps)
-    print(f"\nRace pace model R² = {pace['r2']:.3f}")
+    print(f"\nRace pace model R^2 = {pace['r2']:.3f}")
 
     # build predictions for the pace overlay
     lap_nums = np.arange(summary["LapNumber"].min(), summary["LapNumber"].max() + 1)
@@ -59,14 +61,23 @@ def analyse_single_driver(session, driver):
         "PredictedTime": pace["model"].predict(lap_nums.reshape(-1, 1)),
     })
 
-    # plots
+    # plots - interactive mode so they all open at once
     fastest = laps.pick_fastest()
     telemetry = get_telemetry(fastest)
 
-    plot_speed_trace(telemetry, title=f"{driver} Speed Trace - {event_name}")
-    plot_lap_times(summary, title=f"{driver} Lap Times - {event_name}")
-    plot_tyre_degradation(tyre_degradation(laps), title=f"{driver} Tyre Deg - {event_name}")
-    plot_stint_pace(summary, model_predictions=predictions, title=f"{driver} Race Pace - {event_name}")
+    plt.ion()
+    plots = [
+        ("Speed trace", lambda: plot_speed_trace(telemetry, title=f"{driver} Speed Trace - {event_name}")),
+        ("Lap times", lambda: plot_lap_times(summary, title=f"{driver} Lap Times - {event_name}")),
+        ("Tyre degradation", lambda: plot_tyre_degradation(tyre_degradation(laps), title=f"{driver} Tyre Deg - {event_name}")),
+        ("Race pace", lambda: plot_stint_pace(summary, model_predictions=predictions, title=f"{driver} Race Pace - {event_name}")),
+    ]
+
+    for _, plot_fn in tqdm(plots, desc="Generating plots"):
+        plot_fn()
+
+    plt.ioff()
+    plt.show()
 
 
 def analyse_two_drivers(session, driver_1, driver_2):
@@ -96,20 +107,30 @@ def analyse_two_drivers(session, driver_1, driver_2):
     tel_1 = get_telemetry(laps_1.pick_fastest())
     tel_2 = get_telemetry(laps_2.pick_fastest())
 
-    plot_driver_comparison(tel_1, tel_2, driver_1, driver_2,
-                           title=f"{driver_1} vs {driver_2} - {event_name}")
+    plt.ion()
+    plots = [
+        ("Driver comparison", lambda: plot_driver_comparison(tel_1, tel_2, driver_1, driver_2, title=f"{driver_1} vs {driver_2} - {event_name}")),
+        (f"{driver_1} lap times", lambda: plot_lap_times(summarise_laps(laps_1), title=f"{driver_1} Lap Times - {event_name}")),
+        (f"{driver_2} lap times", lambda: plot_lap_times(summarise_laps(laps_2), title=f"{driver_2} Lap Times - {event_name}")),
+    ]
 
-    # lap time plots for each
-    plot_lap_times(summarise_laps(laps_1), title=f"{driver_1} Lap Times - {event_name}")
-    plot_lap_times(summarise_laps(laps_2), title=f"{driver_2} Lap Times - {event_name}")
+    for _, plot_fn in tqdm(plots, desc="Generating plots"):
+        plot_fn()
+
+    plt.ioff()
+    plt.show()
 
 
 def main():
     """Load an F1 session and run the appropriate analysis based on args."""
     args = build_parser().parse_args()
 
-    print(f"Loading {args.year} {args.race} {args.session}...")
+    pbar = tqdm(total=2, desc="Loading session data")
     session = load_session(args.year, args.race, args.session)
+    pbar.update(1)
+    pbar.set_description("Processing drivers")
+    pbar.update(1)
+    pbar.close()
 
     available = list_drivers(session)
     print(f"Drivers: {', '.join(available)}")
