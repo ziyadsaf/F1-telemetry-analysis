@@ -6,10 +6,11 @@ import numpy as np
 import pandas as pd
 
 from f1_telemetry.loader import load_session, get_driver_laps, get_telemetry, list_drivers
-from f1_telemetry.analysis import summarise_laps, stint_summary, tyre_degradation
+from f1_telemetry.analysis import summarise_laps, stint_summary, tyre_degradation, compare_drivers
 from f1_telemetry.modelling import fit_tyre_deg_model, fit_race_pace_model
 from f1_telemetry.visualisation import (
     plot_speed_trace, plot_lap_times, plot_tyre_degradation, plot_stint_pace,
+    plot_driver_comparison,
 )
 
 
@@ -68,6 +69,41 @@ def analyse_single_driver(session, driver):
     plot_stint_pace(summary, model_predictions=predictions, title=f"{driver} Race Pace - {event_name}")
 
 
+def analyse_two_drivers(session, driver_1, driver_2):
+    """Compare two drivers' performance and telemetry side by side."""
+    event_name = f"{session.event['EventName']} {session.event.year}"
+
+    # stint breakdowns for both
+    for driver in (driver_1, driver_2):
+        laps = get_driver_laps(session, driver)
+        if laps.empty:
+            print(f"No laps found for {driver}")
+            return
+        stints = stint_summary(laps)
+        print(f"\nStint summary for {driver}:")
+        print(stints.to_string(index=False))
+
+    # lap time gap
+    comparison = compare_drivers(session, driver_1, driver_2)
+    mean_gap = comparison["Delta"].mean()
+    sign = "+" if mean_gap > 0 else ""
+    print(f"\nAverage gap: {driver_1} is {sign}{mean_gap:.3f}s vs {driver_2}")
+
+    # telemetry comparison on fastest laps
+    laps_1 = get_driver_laps(session, driver_1)
+    laps_2 = get_driver_laps(session, driver_2)
+
+    tel_1 = get_telemetry(laps_1.pick_fastest())
+    tel_2 = get_telemetry(laps_2.pick_fastest())
+
+    plot_driver_comparison(tel_1, tel_2, driver_1, driver_2,
+                           title=f"{driver_1} vs {driver_2} - {event_name}")
+
+    # lap time plots for each
+    plot_lap_times(summarise_laps(laps_1), title=f"{driver_1} Lap Times - {event_name}")
+    plot_lap_times(summarise_laps(laps_2), title=f"{driver_2} Lap Times - {event_name}")
+
+
 def main():
     """Load an F1 session and run the appropriate analysis based on args."""
     args = build_parser().parse_args()
@@ -88,8 +124,7 @@ def main():
         if len(args.drivers) == 1:
             analyse_single_driver(session, args.drivers[0])
         elif len(args.drivers) == 2:
-            # analyse_two_drivers(session, args.drivers[0], args.drivers[1])
-            pass
+            analyse_two_drivers(session, args.drivers[0], args.drivers[1])
         else:
             print("Error: pass one or two drivers max")
             sys.exit(1)
